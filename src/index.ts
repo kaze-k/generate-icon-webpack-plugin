@@ -89,7 +89,7 @@ class Plugin {
 
       if (typeof this.size === "number") {
         try {
-          handleLog({
+          await handleLog({
             handleGenerate: handleGenerate,
             size: this.size,
             format: this.format,
@@ -107,7 +107,7 @@ class Plugin {
       if (this.size instanceof Array && isNumArray(this.size)) {
         try {
           for (const size in this.size) {
-            handleLog({
+            await handleLog({
               handleGenerate: handleGenerate,
               size: this.size[size],
               format: this.format,
