@@ -1,14 +1,15 @@
-import Table from "cli-table"
-import sharp, { OutputInfo } from "sharp"
+import { basename, isAbsolute } from "path"
+import { OutputInfo, Sharp } from "sharp"
 
 interface Options {
-  handleGenerate: sharp.Sharp
+  generator: Sharp
   size: number
   format: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
-  outputDir: string
-  imgName: string
-  log: boolean
-  table: void | Table
+}
+
+interface SharpReturn {
+  buffer: Buffer
+  info: OutputInfo
 }
 
 function isNumArray(x: unknown): boolean {
@@ -19,23 +20,32 @@ function isNumArray(x: unknown): boolean {
   return false
 }
 
-async function handleLog(options: Options) {
-  const data: OutputInfo = await options.handleGenerate
-    .resize(options.size)
-    .toFormat(options.format)
-    .toFile(`${options.outputDir}/${options.imgName}${options.size}.${options.format}`)
+function handleSharp(options: Options): Promise<SharpReturn> {
+  return new Promise(
+    (resolve: (value: SharpReturn | PromiseLike<SharpReturn>) => void, reject: (reason?: Error) => void): void => {
+      options.generator
+        .resize(options.size)
+        .toFormat(options.format)
+        .toBuffer((err: Error, buffer: Buffer, info: OutputInfo): void => {
+          if (err) {
+            reject(err)
+          }
 
-  if (options.log) {
-    options.table?.push([
-      data["format"],
-      String(data["width"]),
-      String(data["height"]),
-      String(data["channels"]),
-      String(data["premultiplied"]),
-      String(data["size"]),
-      `${options.outputDir}/${options.imgName}${options.size}.${options.format}`,
-    ])
-  }
+          resolve({
+            buffer: buffer,
+            info: info,
+          })
+        })
+    },
+  )
 }
 
-export { isNumArray, handleLog }
+function handlePath(path: string): string {
+  if (isAbsolute(path)) {
+    path = basename(path)
+  }
+
+  return path
+}
+
+export { isNumArray, handleSharp, handlePath, type SharpReturn }
