@@ -124,7 +124,7 @@ class Plugin {
     const file = `${outputDir}/${this.imgName}${handler.size}.${this.format}`
     handler.compilation.emitAsset(file, source)
 
-    const outputPath = `${join(handler.compiler.outputPath, this.outputDir)}/${this.imgName}/${handler.size}.${this.format}`
+    const outputPath = `${join(handler.compiler.outputPath, outputDir)}/${this.imgName}${handler.size}.${this.format}`
 
     data.push(
       String(info["format"]),
