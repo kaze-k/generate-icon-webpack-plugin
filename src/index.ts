@@ -1,5 +1,6 @@
+import { join } from "path"
 import sharp, { Sharp } from "sharp"
-import { Compiler, Compilation } from "webpack"
+import { Compiler, Compilation, Cache } from "webpack"
 import { SharpReturn, handlePath, handleSharp, isNumArray } from "./utils"
 import Table from "cli-table"
 
@@ -70,18 +71,25 @@ class Plugin {
     compiler.hooks.thisCompilation.tap("generate-icon-webpack-plugin", (compilation: Compilation): void => {
       this.logger = compiler.getInfrastructureLogger("generate-icon-webpack-plugin")
 
-      compilation.hooks.processAssets.tap(
+      compilation.hooks.processAssets.tapAsync(
         {
           name: "generate-icon-webpack-plugin",
           stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
         },
-        (): void => {
-          this.generate(compiler, compilation)
+        async (assets: Compilation["assets"], callback: CallableFunction): Promise<void> => {
+          try {
+            await this.generate(compiler, compilation)
+            callback()
+          } catch(err) {
+            callback(err)
+            this.logger.error(err)
+          }
         },
       )
 
       compilation.hooks.statsPrinter.tap("generate-icon-webpack-plugin", (): void => {
         if (this.log && typeof this.info !== "undefined") {
+          console.log("")
           console.log("[generate-icon-webpack-plugin]")
           console.log(this.info)
           console.log("")
@@ -112,10 +120,11 @@ class Plugin {
     const { buffer, info } = await generate
 
     const source = new handler.compiler.webpack.sources.RawSource(buffer)
-    const path: string = handlePath(this.outputDir)
-    handler.compilation.emitAsset(`${path}/${this.imgName}${handler.size}.${this.format}`, source)
+    const outputDir: string = handlePath(this.outputDir)
+    const file = `${outputDir}/${this.imgName}${handler.size}.${this.format}`
+    handler.compilation.emitAsset(file, source)
 
-    const outputPath: string = `${this.outputDir}/${this.imgName}/${handler.size}.${this.format}`
+    const outputPath = `${join(handler.compiler.outputPath, this.outputDir)}/${this.imgName}/${handler.size}.${this.format}`
 
     data.push(
       String(info["format"]),
@@ -152,10 +161,10 @@ class Plugin {
       }
 
       if (this.size instanceof Array && isNumArray(this.size)) {
-        for (const size in this.size) {
+        for (const key in this.size) {
           const data: string[] = await this.handleGenerate({
             generator: generator,
-            size: this.size[size],
+            size: this.size[key],
             compiler: compiler,
             compilation: compilation,
           })
