@@ -1,6 +1,6 @@
 import { join } from "path"
 import sharp, { Sharp } from "sharp"
-import { Compiler, Compilation, Cache } from "webpack"
+import { Compiler, Compilation } from "webpack"
 import { SharpReturn, handlePath, handleSharp, isNumArray } from "./utils"
 import Table from "cli-table"
 
@@ -80,7 +80,7 @@ class Plugin {
           try {
             await this.generate(compiler, compilation)
             callback()
-          } catch(err) {
+          } catch (err) {
             callback(err)
             this.logger.error(err)
           }
@@ -100,7 +100,7 @@ class Plugin {
 
   private handleLog(data: string[][]): string {
     const table = new Table({
-      head: ["format", "width", "height", "channels", "premultiplied", "size", "path"],
+      head: ["format", "width", "height", "channels", "premultiplied", "size"],
       style: { head: ["green"] },
     })
 
@@ -133,8 +133,9 @@ class Plugin {
       String(info["channels"]),
       String(info["premultiplied"]),
       String(info["size"]),
-      String(outputPath),
     )
+
+    console.log(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
 
     return data
   }
