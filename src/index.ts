@@ -135,7 +135,9 @@ class Plugin {
       String(info["size"]),
     )
 
-    console.log(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
+    if (this.log) {
+      console.log(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
+    }
 
     return data
   }
