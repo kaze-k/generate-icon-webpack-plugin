@@ -1,7 +1,7 @@
 import { join } from "path"
 import sharp, { Sharp } from "sharp"
 import { Compiler, Compilation } from "webpack"
-import { SharpReturn, handlePath, handleSharp, isNumArray } from "./utils"
+import { SharpReturn, handleSharp, isNumArray } from "./utils"
 import Table from "cli-table"
 
 const DEFAULT_FORMAT = "png"
@@ -11,7 +11,7 @@ const DEFAULT_LOG = false
 
 interface Options {
   original: string
-  outputDir: string
+  output: string
   size: number[] | number
   format?: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
   grayscale?: boolean
@@ -28,7 +28,7 @@ interface Handler {
 
 class Plugin {
   public readonly original: string
-  public readonly outputDir: string
+  public readonly output: string
   public readonly size: number[] | number
   public readonly format: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
   public readonly grayscale: boolean
@@ -39,7 +39,7 @@ class Plugin {
 
   constructor(options: Options) {
     this.original = options.original
-    this.outputDir = options.outputDir
+    this.output = options.output
     this.size = options.size
 
     if (options.format) {
@@ -120,7 +120,7 @@ class Plugin {
     const { buffer, info } = await generate
 
     const source = new handler.compiler.webpack.sources.RawSource(buffer)
-    const outputDir: string = handlePath(this.outputDir)
+    const outputDir: string = this.output
     const file = `${outputDir}/${this.imgName}${handler.size}.${this.format}`
     handler.compilation.emitAsset(file, source)
 

@@ -1,4 +1,3 @@
-import { basename, isAbsolute } from "path"
 import { OutputInfo, Sharp } from "sharp"
 
 interface Options {
@@ -40,12 +39,4 @@ function handleSharp(options: Options): Promise<SharpReturn> {
   )
 }
 
-function handlePath(path: string): string {
-  if (isAbsolute(path)) {
-    path = basename(path)
-  }
-
-  return path
-}
-
-export { isNumArray, handleSharp, handlePath, type SharpReturn }
+export { isNumArray, handleSharp, type SharpReturn }

@@ -15,7 +15,7 @@ configure the plugin:
 ``` js
 new CrxPackWebpackPlugin({
   original: path.resolve(__dirname, "./icon.png"),
-  outputDir: path.resolve(__dirname, "./build/icons/"),
+  output: "icons",
   size: [128, 64, 48, 32, 16], // 128, It can be an array or a number
   format: "png",
   grayscale: false,
@@ -29,7 +29,7 @@ new CrxPackWebpackPlugin({
 | Option | Required | Type | Default | About |
 |---|---|---|---|---|
 | original | yes | string | none | images that need to be converted |
-| outputDir | yes | string | none | the directory for the output picture |
+| output | yes | string | none | the directory for the output picture |
 | size | yes | number[]/number | none | image size, if it is a number, only one image is generated, if it is an array, it is multiple images |
 | format | no | string | "png" | the format of the output picture |
 | grayscale | no | boolean | false | whether to generate a gray image |
