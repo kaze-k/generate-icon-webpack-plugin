@@ -36,6 +36,7 @@ class Plugin {
   public readonly log: boolean
   public logger: ReturnType<Compilation["getLogger"]>
   public info: string
+  private readonly outputPrints: string[]
 
   constructor(options: Options) {
     this.original = options.original
@@ -65,6 +66,8 @@ class Plugin {
     } else {
       this.log = DEFAULT_LOG
     }
+
+    this.outputPrints = []
   }
 
   public apply(compiler: Compiler): void {
@@ -88,6 +91,15 @@ class Plugin {
       )
 
       compilation.hooks.statsPrinter.tap("generate-icon-webpack-plugin", (): void => {
+        if (this.log && this.outputPrints.length) {
+          console.log("")
+          console.log("[generate-icon-webpack-plugin]")
+          this.outputPrints.forEach((output: string): void => {
+            console.log(output)
+          })
+          console.log("")
+        }
+
         if (this.log && typeof this.info !== "undefined") {
           console.log("")
           console.log("[generate-icon-webpack-plugin]")
@@ -136,7 +148,7 @@ class Plugin {
     )
 
     if (this.log) {
-      console.log(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
+      this.outputPrints.push(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
     }
 
     return data
