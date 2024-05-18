@@ -1,42 +1,33 @@
-import { OutputInfo, Sharp } from "sharp"
+import Table from "cli-table"
+import sharp, { FormatEnum, OutputInfo } from "sharp"
 
-interface Options {
-  generator: Sharp
-  size: number
-  format: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
-}
-
-interface SharpReturn {
-  buffer: Buffer
+async function sharp_resolver(
+  file: string,
+  size: number,
+  format: keyof FormatEnum,
+  grayscale: boolean,
+): Promise<{
+  data: Buffer
   info: OutputInfo
+}> {
+  const { data, info } = await sharp(file)
+    .resize(size)
+    .toFormat(format)
+    .grayscale(grayscale)
+    .toBuffer({ resolveWithObject: true })
+
+  return { data, info }
 }
 
-function isNumArray(x: unknown): boolean {
-  if (x instanceof Array) {
-    return x.length > 0 && x.every((value: undefined): boolean => typeof value === "number")
-  }
-
-  return false
-}
-
-function handleSharp(options: Options): Promise<SharpReturn> {
-  return new Promise(
-    (resolve: (value: SharpReturn | PromiseLike<SharpReturn>) => void, reject: (reason?: Error) => void): void => {
-      options.generator
-        .resize(options.size)
-        .toFormat(options.format)
-        .toBuffer((err: Error, buffer: Buffer, info: OutputInfo): void => {
-          if (err) {
-            reject(err)
-          }
-
-          resolve({
-            buffer: buffer,
-            info: info,
-          })
-        })
+function setTable(data: string[][]): string {
+  const table = new Table({
+    head: ["format", "width", "height", "channels", "premultiplied", "size"],
+    style: {
+      head: ["green"],
     },
-  )
+  })
+  table.push(...data)
+  return table.toString()
 }
 
-export { isNumArray, handleSharp, type SharpReturn }
+export { sharp_resolver, setTable }

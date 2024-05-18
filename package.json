@@ -1,13 +1,13 @@
 {
   "name": "generate-icon-webpack-plugin",
-  "version": "2.1.1",
+  "version": "2.2.1",
   "description": "A webpack plugin to generate icons of different sizes",
   "main": "dist/index.js",
   "files": [
     "dist/"
   ],
   "scripts": {
-    "compile": "tsc && babel src -d dist -x \".ts\"",
+    "compile": "node index.mjs",
     "eslint:check": "eslint src",
     "eslint:fix": "eslint --fix src",
     "prettier:check": "prettier --check src",
@@ -49,6 +49,8 @@
     "@typescript-eslint/parser": "^6.4.0",
     "eslint": "^8.47.0",
     "eslint-config-prettier": "^9.0.0",
+    "log-symbols": "^6.0.0",
+    "ora": "^8.0.1",
     "prettier": "^3.0.2",
     "typescript": "^5.1.6"
   }

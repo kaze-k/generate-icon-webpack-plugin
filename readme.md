@@ -29,9 +29,9 @@ new CrxPackWebpackPlugin({
 | Option | Required | Type | Default | About |
 |---|---|---|---|---|
 | original | yes | string | none | images that need to be converted |
-| output | yes | string | none | the directory for the output picture |
-| size | yes | number[]/number | none | image size, if it is a number, only one image is generated, if it is an array, it is multiple images |
-| format | no | string | "png" | the format of the output picture |
+| output | no | string | "icons" | the directory for the output picture |
+| size | yes | number[]/number | [16, 32, 48, 64, 128] | image size, if it is a number, only one image is generated, if it is an array, it is multiple images |
+| format | no | keyof sharp.FormatEnum | "png" | the format of the output picture |
 | grayscale | no | boolean | false | whether to generate a gray image |
 | imgName | no | string | "icon" | name of the picture |
 | log | no | boolean | false | print picture information |

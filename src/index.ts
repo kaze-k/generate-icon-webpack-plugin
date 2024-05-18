@@ -1,199 +1,160 @@
-import { join } from "path"
-import sharp, { Sharp } from "sharp"
-import { Compiler, Compilation } from "webpack"
-import { SharpReturn, handleSharp, isNumArray } from "./utils"
-import Table from "cli-table"
+import { FormatEnum, OutputInfo } from "sharp"
+import { Compilation, Compiler } from "webpack"
+import { setTable, sharp_resolver } from "./utils"
+import path from "path"
 
-const DEFAULT_FORMAT = "png"
-const DEFAULT_GRAYSCALE = false
-const DEFAULT_IMG_NAME = "icon"
-const DEFAULT_LOG = false
-
-interface Options {
+interface GenerateIconWebpackPluginOptions {
   original: string
-  output: string
+  output?: string
   size: number[] | number
-  format?: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
+  formart?: keyof FormatEnum
   grayscale?: boolean
   imgName?: string
   log?: boolean
 }
 
-interface Handler {
-  generator: Sharp
-  size: number
-  compiler: Compiler
-  compilation: Compilation
-}
+class GenerateIconWebpackPlugin {
+  private readonly name: string = "generate-icon-webpack-plugin"
+  private info: string[][] = []
 
-class Plugin {
-  public readonly original: string
-  public readonly output: string
-  public readonly size: number[] | number
-  public readonly format: "avif" | "gif" | "heif" | "jpeg" | "jp2" | "jxl" | "png" | "tiff" | "webp"
-  public readonly grayscale: boolean
-  public readonly imgName: string
-  public readonly log: boolean
-  public logger: ReturnType<Compilation["getLogger"]>
-  public info: string
-  private readonly outputPrints: string[]
+  private readonly original: string
+  private readonly output: string
+  private readonly size: number[] | number
+  private readonly format: keyof FormatEnum
+  private readonly grayscale: boolean
+  private readonly imgName: string
+  private readonly log: boolean
 
-  constructor(options: Options) {
+  private compiler: Compiler
+  private compilation: Compilation
+
+  constructor(options: GenerateIconWebpackPluginOptions) {
     this.original = options.original
-    this.output = options.output
-    this.size = options.size
-
-    if (options.format) {
-      this.format = options.format
-    } else {
-      this.format = DEFAULT_FORMAT
-    }
-
-    if (typeof options.grayscale !== "undefined") {
-      this.grayscale = options.grayscale
-    } else {
-      this.grayscale = DEFAULT_GRAYSCALE
-    }
-
-    if (options.imgName) {
-      this.imgName = options.imgName
-    } else {
-      this.imgName = DEFAULT_IMG_NAME
-    }
-
-    if (typeof options.log !== "undefined") {
-      this.log = options.log
-    } else {
-      this.log = DEFAULT_LOG
-    }
-
-    this.outputPrints = []
+    this.output = options.output || "icons"
+    this.size = options.size || [16, 32, 48, 64, 128]
+    this.format = options.formart || "png"
+    this.grayscale = options.grayscale || false
+    this.imgName = options.imgName || "icon"
+    this.log = options.log || false
   }
 
-  public apply(compiler: Compiler): void {
-    compiler.hooks.thisCompilation.tap("generate-icon-webpack-plugin", (compilation: Compilation): void => {
-      this.logger = compiler.getInfrastructureLogger("generate-icon-webpack-plugin")
+  apply(compiler: Compiler): void {
+    this.compiler = compiler
+    this.thisCompilation()
+  }
 
-      compilation.hooks.processAssets.tapAsync(
-        {
-          name: "generate-icon-webpack-plugin",
-          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
-        },
-        async (assets: Compilation["assets"], callback: CallableFunction): Promise<void> => {
-          try {
-            await this.generate(compiler, compilation)
-            callback()
-          } catch (err) {
-            callback(err)
-            this.logger.error(err)
-          }
-        },
-      )
-
-      compilation.hooks.statsPrinter.tap("generate-icon-webpack-plugin", (): void => {
-        if (this.log && this.outputPrints.length) {
-          console.log("")
-          console.log("[generate-icon-webpack-plugin]")
-          this.outputPrints.forEach((output: string): void => {
-            console.log(output)
-          })
-          console.log("")
-        }
-
-        if (this.log && typeof this.info !== "undefined") {
-          console.log("")
-          console.log("[generate-icon-webpack-plugin]")
-          console.log(this.info)
-          console.log("")
-        }
-      })
+  thisCompilation(): void {
+    this.compiler.hooks.thisCompilation.tap(this.name, (compilation: Compilation): void => {
+      this.compilation = compilation
+      this.processAssets()
     })
   }
 
-  private handleLog(data: string[][]): string {
-    const table = new Table({
-      head: ["format", "width", "height", "channels", "premultiplied", "size"],
-      style: { head: ["green"] },
-    })
+  statsPrinter(): void {
+    this.compilation.hooks.statsPrinter.tap(this.name, (): void => {
+      const hasData: boolean = this.info.every((data: string[]): boolean => data.length > 0)
 
-    table.push(...data)
-
-    return table.toString()
-  }
-
-  private async handleGenerate(handler: Handler): Promise<string[]> {
-    const data: string[] = []
-    const generate: Promise<SharpReturn> = handleSharp({
-      generator: handler.generator,
-      format: this.format,
-      size: handler.size,
-    })
-
-    const { buffer, info } = await generate
-
-    const source = new handler.compiler.webpack.sources.RawSource(buffer)
-    const outputDir: string = this.output
-    const file = `${outputDir}/${this.imgName}${handler.size}.${this.format}`
-    handler.compilation.emitAsset(file, source)
-
-    const outputPath = `${join(handler.compiler.outputPath, outputDir)}/${this.imgName}${handler.size}.${this.format}`
-
-    data.push(
-      String(info["format"]),
-      String(info["width"]),
-      String(info["height"]),
-      String(info["channels"]),
-      String(info["premultiplied"]),
-      String(info["size"]),
-    )
-
-    if (this.log) {
-      this.outputPrints.push(`${this.imgName}${handler.size}.${this.format} -> ${outputPath}`)
-    }
-
-    return data
-  }
-
-  private async generate(compiler: Compiler, compilation: Compilation): Promise<void> {
-    try {
-      const infoList: string[][] = []
-      const generator: Sharp = sharp(this.original)
-
-      if (this.grayscale) {
-        generator.grayscale()
+      if (this.log && typeof hasData) {
+        const info_table: string = setTable(this.info)
+        console.log()
+        console.log("[generate-icon-webpack-plugin]")
+        console.log(info_table)
+        console.log()
       }
+      this.info = []
+    })
+  }
 
-      if (typeof this.size === "number") {
-        const data: string[] = await this.handleGenerate({
-          generator: generator,
-          size: this.size,
-          compiler: compiler,
-          compilation: compilation,
+  processAssets(): void {
+    this.compilation.hooks.processAssets.tapPromise(
+      {
+        name: this.name,
+        stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+      },
+      async (): Promise<void> => {
+        const promises: Promise<
+          {
+            outputFilename: string
+            info: OutputInfo
+          }[]
+        > = this.getPromise()
+
+        const data: {
+          outputFilename: string
+          info: OutputInfo
+        }[] = await promises
+
+        data.forEach((value: { outputFilename: string; info: OutputInfo }): void => {
+          this.outputLog(value.outputFilename)
+          this.outputInfo(value.info)
         })
 
-        infoList.push(data)
-        this.info = this.handleLog(infoList)
-      }
+        this.statsPrinter()
+      },
+    )
+  }
 
-      if (this.size instanceof Array && isNumArray(this.size)) {
-        for (const key in this.size) {
-          const data: string[] = await this.handleGenerate({
-            generator: generator,
-            size: this.size[key],
-            compiler: compiler,
-            compilation: compilation,
-          })
+  getPromise(): Promise<
+    {
+      outputFilename: string
+      info: OutputInfo
+    }[]
+  > {
+    const promises: Promise<{
+      outputFilename: string
+      info: OutputInfo
+    }>[] =
+      typeof this.size === "number"
+        ? [this.generate(this.size)]
+        : this.size.map(
+            (
+              size: number,
+            ): Promise<{
+              outputFilename: string
+              info: OutputInfo
+            }> => this.generate(size),
+          )
+    return Promise.all(promises)
+  }
 
-          infoList.push(data)
-        }
+  async generate(size: number): Promise<{
+    outputFilename: string
+    info: OutputInfo
+  }> {
+    const outputFilename: string =
+      typeof this.size === "number" || this.size.length === 1
+        ? `${this.imgName}.${this.format}`
+        : `${this.imgName}-${size}.${this.format}`
 
-        this.info = this.handleLog(infoList)
-      }
-    } catch (err) {
-      this.logger.error(err)
-      throw err
+    const { data, info } = await sharp_resolver(this.original, size, this.format, this.grayscale)
+
+    const file: string = path.join(this.output, outputFilename)
+    const source = new this.compilation.compiler.webpack.sources.RawSource(data)
+    this.compilation.emitAsset(file, source)
+    return { outputFilename, info }
+  }
+
+  outputLog(outputFilename: string): void {
+    if (this.log) {
+      const outputPath: string = path.join(this.compiler.outputPath, this.output, outputFilename)
+      console.log(`${outputFilename} -> ${outputPath}`)
+    }
+  }
+
+  outputInfo(info: OutputInfo): void {
+    const data: string[] = []
+    if (this.log) {
+      data.push(
+        String(info["format"]),
+        String(info["width"]),
+        String(info["height"]),
+        String(info["channels"]),
+        String(info["premultiplied"]),
+        String(info["size"]),
+      )
+      this.info.push(data)
     }
   }
 }
 
-export default Plugin
+export default GenerateIconWebpackPlugin

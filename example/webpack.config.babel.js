@@ -1,10 +1,14 @@
 import path from "path"
-import GenerateIconWebpackPlugin from "../dist"
+import GenerateIconWebpackPlugin from "generate-icon-webpack-plugin"
 
 export default {
   entry: path.resolve(__dirname, "./index.js"),
   output: {
     path: path.resolve(__dirname, "dist"),
+  },
+  cache: {
+    type: "filesystem",
+    allowCollectingMemory: true,
   },
   plugins: [
     new GenerateIconWebpackPlugin({
