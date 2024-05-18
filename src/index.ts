@@ -28,7 +28,7 @@ class GenerateIconWebpackPlugin {
   private compiler: Compiler
   private compilation: Compilation
 
-  constructor(options: GenerateIconWebpackPluginOptions) {
+  public constructor(options: GenerateIconWebpackPluginOptions) {
     this.original = options.original
     this.output = options.output || "icons"
     this.size = options.size || [16, 32, 48, 64, 128]
@@ -38,23 +38,23 @@ class GenerateIconWebpackPlugin {
     this.log = options.log || false
   }
 
-  apply(compiler: Compiler): void {
+  public apply(compiler: Compiler): void {
     this.compiler = compiler
     this.thisCompilation()
   }
 
-  thisCompilation(): void {
+  private thisCompilation(): void {
     this.compiler.hooks.thisCompilation.tap(this.name, (compilation: Compilation): void => {
       this.compilation = compilation
       this.processAssets()
     })
   }
 
-  statsPrinter(): void {
+  private statsPrinter(): void {
     this.compilation.hooks.statsPrinter.tap(this.name, (): void => {
       const hasData: boolean = this.info.every((data: string[]): boolean => data.length > 0)
 
-      if (this.log && typeof hasData) {
+      if (this.log && hasData) {
         const info_table: string = setTable(this.info)
         console.log()
         console.log("[generate-icon-webpack-plugin]")
@@ -65,7 +65,7 @@ class GenerateIconWebpackPlugin {
     })
   }
 
-  processAssets(): void {
+  private processAssets(): void {
     this.compilation.hooks.processAssets.tapPromise(
       {
         name: this.name,
@@ -94,7 +94,7 @@ class GenerateIconWebpackPlugin {
     )
   }
 
-  getPromise(): Promise<
+  private getPromise(): Promise<
     {
       outputFilename: string
       info: OutputInfo
@@ -117,7 +117,7 @@ class GenerateIconWebpackPlugin {
     return Promise.all(promises)
   }
 
-  async generate(size: number): Promise<{
+  private async generate(size: number): Promise<{
     outputFilename: string
     info: OutputInfo
   }> {
@@ -134,14 +134,14 @@ class GenerateIconWebpackPlugin {
     return { outputFilename, info }
   }
 
-  outputLog(outputFilename: string): void {
+  private outputLog(outputFilename: string): void {
     if (this.log) {
       const outputPath: string = path.join(this.compiler.outputPath, this.output, outputFilename)
       console.log(`${outputFilename} -> ${outputPath}`)
     }
   }
 
-  outputInfo(info: OutputInfo): void {
+  private outputInfo(info: OutputInfo): void {
     const data: string[] = []
     if (this.log) {
       data.push(
