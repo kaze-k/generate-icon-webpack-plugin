@@ -4,11 +4,15 @@ import process from "child_process"
 import fs from "fs"
 import path from "path"
 
-const useExec = () => {
+const useExec = (command) => {
   return new Promise((resolve, reject) => {
-    process.exec(`tsc && babel src -d dist -x ".ts"`, (err, stdout, stderr) => {
+    process.exec(command, (err, stdout, stderr) => {
       if (err) {
-        reject(err)
+        reject({
+          err,
+          stdout,
+          stderr,
+        })
       }
 
       resolve({
@@ -41,12 +45,20 @@ const main = async () => {
   }
 
   try {
-    await useExec()
+    const { stdout: tscStdout, stderr: tscStderr } = await useExec(`tsc`)
+    if (tscStdout) console.info("\n", tscStdout)
+    if (tscStderr) console.error("\n", tscStderr)
+
+    const { stdout: babelStdout, stderr: babelStderr } = await useExec(`babel src -d dist -x ".ts"`)
     spinner.stop()
     console.log(logSymbols.success, "编译完成")
+    if (babelStdout) console.info("\n", babelStdout)
+    if (babelStderr) console.error("\n", babelStderr)
   } catch (err) {
     spinner.stop()
-    console.log(logSymbols.error, err)
+    console.error(logSymbols.error, err.err)
+    console.info(err.stdout)
+    console.info(err.stderr)
   }
 }
 

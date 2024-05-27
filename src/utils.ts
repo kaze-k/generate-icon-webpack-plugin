@@ -1,27 +1,60 @@
 import Table from "cli-table"
-import sharp, { FormatEnum, OutputInfo } from "sharp"
+import Jimp from "jimp"
 
-async function sharp_resolver(
+type Format = "bmp" | "gif" | "png" | "jpeg" | "tiff"
+
+interface Bitmap {
+  data: Buffer
+  width: number
+  height: number
+  depth: number
+  interlace: boolean
+  palette: boolean
+  color: boolean
+  alpha: boolean
+  bpp: number
+  colorType: number
+  gamma: number
+}
+
+async function jimp_resolver(
   file: string,
   size: number,
-  format: keyof FormatEnum,
+  format: Format,
   grayscale: boolean,
 ): Promise<{
   data: Buffer
-  info: OutputInfo
+  info: Bitmap
 }> {
-  const { data, info } = await sharp(file)
-    .resize(size)
-    .toFormat(format)
-    .grayscale(grayscale)
-    .toBuffer({ resolveWithObject: true })
+  const image: Jimp = await Jimp.read(file)
 
-  return { data, info }
+  if (grayscale) image.greyscale()
+
+  image.resize(size, size)
+
+  let mine:
+    | typeof Jimp.MIME_PNG
+    | typeof Jimp.MIME_JPEG
+    | typeof Jimp.MIME_GIF
+    | typeof Jimp.MIME_BMP
+    | typeof Jimp.MIME_TIFF = Jimp.MIME_PNG
+  if (format === "png") mine = Jimp.MIME_PNG
+  else if (format === "jpeg") mine = Jimp.MIME_JPEG
+  else if (format === "gif") mine = Jimp.MIME_GIF
+  else if (format === "bmp") mine = Jimp.MIME_BMP
+  else if (format === "tiff") mine = Jimp.MIME_TIFF
+
+  const data: Buffer = await image.getBufferAsync(mine)
+
+  return {
+    data: data,
+    info: image.bitmap as Bitmap,
+  }
 }
 
 function setTable(data: string[][]): string {
   const table = new Table({
-    head: ["format", "width", "height", "channels", "premultiplied", "size"],
+    head: ["width", "height", "depth", "alpha", "color", "colorType", "bpp", "interlace", "palette", "gamma", "size"],
     style: {
       head: ["green"],
     },
@@ -30,4 +63,6 @@ function setTable(data: string[][]): string {
   return table.toString()
 }
 
-export { sharp_resolver, setTable }
+export { jimp_resolver, setTable }
+
+export type { Bitmap, Format }

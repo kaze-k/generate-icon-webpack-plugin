@@ -5,11 +5,16 @@ export default {
   entry: path.resolve(__dirname, "./index.js"),
   output: {
     path: path.resolve(__dirname, "dist"),
+    clean: true,
   },
   cache: {
     type: "filesystem",
     allowCollectingMemory: true,
   },
+  infrastructureLogging: {
+    debug: true,
+  },
+  mode: "development",
   plugins: [
     new GenerateIconWebpackPlugin({
       original: path.resolve(__dirname, "icon.png"),
