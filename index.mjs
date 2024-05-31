@@ -46,19 +46,19 @@ const main = async () => {
 
   try {
     const { stdout: tscStdout, stderr: tscStderr } = await useExec(`tsc`)
-    if (tscStdout) console.info("\n", tscStdout)
-    if (tscStderr) console.error("\n", tscStderr)
+    if (tscStdout) console.info(tscStdout)
+    if (tscStderr) console.error(logSymbols.error, tscStderr)
 
     const { stdout: babelStdout, stderr: babelStderr } = await useExec(`babel src -d dist -x ".ts"`)
     spinner.stop()
     console.log(logSymbols.success, "编译完成")
-    if (babelStdout) console.info("\n", babelStdout)
-    if (babelStderr) console.error("\n", babelStderr)
+    if (babelStdout) console.info(babelStdout)
+    if (babelStderr) console.error(logSymbols.error, babelStderr)
   } catch (err) {
     spinner.stop()
-    console.error(logSymbols.error, err.err)
-    console.info(err.stdout)
-    console.info(err.stderr)
+    if (err.err) console.error(logSymbols.error, err.err.message)
+    if (err.stderr) console.error(logSymbols.error, err.stderr)
+    if (err.stdout) console.info(err.stdout)
   }
 }
 

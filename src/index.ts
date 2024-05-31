@@ -4,9 +4,9 @@ import type { Bitmap, Format } from "./utils"
 import path from "path"
 
 interface GenerateIconWebpackPluginOptions {
-  original: string
-  output?: string
-  size: number[] | number
+  logo: string
+  dir?: string
+  size?: number[] | number
   formart?: Format
   grayscale?: boolean
   imgName?: string
@@ -14,11 +14,11 @@ interface GenerateIconWebpackPluginOptions {
 }
 
 class GenerateIconWebpackPlugin {
-  private readonly name: string = "generate-icon-webpack-plugin"
+  private readonly pluginName: string = "generate-icon-webpack-plugin"
   private readonly info: string[][] = []
 
-  private readonly original: string
-  private readonly output: string
+  private readonly logo: string
+  private readonly dir: string
   private readonly size: number[] | number
   private readonly format: Format
   private readonly grayscale: boolean
@@ -29,8 +29,8 @@ class GenerateIconWebpackPlugin {
   private compilation: Compilation
 
   public constructor(options: GenerateIconWebpackPluginOptions) {
-    this.original = options.original
-    this.output = options.output || "icons"
+    this.logo = options.logo
+    this.dir = options.dir || "icons"
     this.size = options.size || [16, 32, 48, 64, 128]
     this.format = options.formart || "png"
     this.grayscale = options.grayscale || false
@@ -44,12 +44,12 @@ class GenerateIconWebpackPlugin {
   }
 
   private thisCompilation(): void {
-    this.compiler.hooks.thisCompilation.tap(this.name, (compilation: Compilation): void => {
-      compilation.fileDependencies.add(this.original)
+    this.compiler.hooks.thisCompilation.tap(this.pluginName, (compilation: Compilation): void => {
+      compilation.fileDependencies.add(this.logo)
       this.compilation = compilation
       this.processAssets()
     })
-    this.compiler.hooks.done.tap(this.name, (): void => {
+    this.compiler.hooks.done.tap(this.pluginName, (): void => {
       this.statsPrinter()
     })
   }
@@ -57,11 +57,11 @@ class GenerateIconWebpackPlugin {
   private processAssets(): void {
     this.compilation.hooks.processAssets.tapPromise(
       {
-        name: this.name,
+        name: this.pluginName,
         stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
       },
       async (): Promise<void> => {
-        const absoluteOutputPath: string = path.resolve(this.compiler.options.output.path || process.cwd(), this.output)
+        const absoluteOutputPath: string = path.resolve(this.compiler.options.output.path || process.cwd(), this.dir)
         const promises: Promise<
           {
             outputFilename: string
@@ -92,7 +92,7 @@ class GenerateIconWebpackPlugin {
   }
 
   private statsPrinter(): void {
-    this.compilation.hooks.statsPrinter.tap(this.name, (): void => {
+    this.compilation.hooks.statsPrinter.tap(this.pluginName, (): void => {
       const hasData: boolean = this.info.every((data: string[]): boolean => data.length > 0)
 
       if (this.log && hasData) {
@@ -150,7 +150,7 @@ class GenerateIconWebpackPlugin {
         ? `${this.imgName}.${this.format}`
         : `${this.imgName}-${size}.${this.format}`
 
-    const { data, info } = await jimp_resolver(this.original, size, this.format, this.grayscale)
+    const { data, info } = await jimp_resolver(this.logo, size, this.format, this.grayscale)
 
     const absFile: string = path.resolve(absoluteOutputPath, outputFilename)
     const file: string = path.relative(this.compiler.outputPath, absFile)
@@ -160,7 +160,7 @@ class GenerateIconWebpackPlugin {
 
   private outputLog(outputFilename: string): void {
     if (this.log) {
-      const outputPath: string = path.join(this.compiler.outputPath, this.output, outputFilename)
+      const outputPath: string = path.join(this.compiler.outputPath, this.dir, outputFilename)
       console.log(`${outputFilename} -> ${outputPath}`)
     }
   }
@@ -188,4 +188,4 @@ class GenerateIconWebpackPlugin {
   }
 }
 
-export default GenerateIconWebpackPlugin
+export = GenerateIconWebpackPlugin

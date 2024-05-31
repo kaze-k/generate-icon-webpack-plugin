@@ -10,7 +10,7 @@
     "pretty": true,
     "strict": true,
     "isolatedModules": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
