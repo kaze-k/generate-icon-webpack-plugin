@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "test": "webpack --mode production",
-    "test:watch": "webpack watch --mode development"
+    "test:watch": "webpack watch --mode development",
+    "test:server": "webpack watch --config webpack.server.config.js"
   },
   "devDependencies": {
     "@babel/register": "^7.23.7",

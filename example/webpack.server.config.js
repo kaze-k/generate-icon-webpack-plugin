@@ -1,7 +1,8 @@
-import path from "path"
-import GenerateIconWebpackPlugin from "generate-icon-webpack-plugin"
+const path = require("path")
+const GenerateIconWebpackPlugin = require("generate-icon-webpack-plugin")
 
-export default {
+module.exports = {
+  mode: "development",
   entry: path.resolve(__dirname, "./index.js"),
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -13,6 +14,15 @@ export default {
   },
   infrastructureLogging: {
     debug: true,
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, "dist"),
+    publicPath: "/",
+    compress: true,
+    port: 9000,
+    open: false,
+    openPage: "",
+    stats: "errors-only"
   },
   plugins: [
     new GenerateIconWebpackPlugin({
