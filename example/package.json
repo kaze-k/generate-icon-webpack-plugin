@@ -6,12 +6,13 @@
   "scripts": {
     "test": "webpack --mode production",
     "test:watch": "webpack watch --mode development",
-    "test:server": "webpack watch --config webpack.server.config.js"
+    "test:server": "webpack serve --config webpack.config.server.js"
   },
   "devDependencies": {
     "@babel/register": "^7.23.7",
     "generate-icon-webpack-plugin": "link:../",
     "webpack": "^5.91.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
   }
 }

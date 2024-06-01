@@ -16,13 +16,14 @@ module.exports = {
     debug: true,
   },
   devServer: {
-    contentBase: path.resolve(__dirname, "dist"),
-    publicPath: "/",
+    static: path.resolve(__dirname, "dist"),
     compress: true,
     port: 9000,
-    open: false,
-    openPage: "",
-    stats: "errors-only"
+    open: true,
+    hot: true,
+    devMiddleware: {
+      writeToDisk: true,
+    },
   },
   plugins: [
     new GenerateIconWebpackPlugin({
