@@ -2,6 +2,8 @@
 
 A webpack plugin to generate icons of different sizes
 
+Images in the `icons` field and `action.default_icon` field in chrome extensions **Manifest V3** can be generated using this plugin
+
 ## Usage
 
 add the plugin:
@@ -18,7 +20,7 @@ configure the plugin:
 
 ``` js
 new CrxPackWebpackPlugin({
-  log: path.resolve(__dirname, "./icon.png"),
+  logo: path.resolve(__dirname, "./icon.png"),
   dir: "icons",
   size: [128, 64, 48, 32, 16], // 128, It can be an array or a number
   format: "png",

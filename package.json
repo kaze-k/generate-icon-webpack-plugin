@@ -1,6 +1,6 @@
 {
   "name": "generate-icon-webpack-plugin",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "A webpack plugin to generate icons of different sizes",
   "main": "dist/index.js",
   "files": [
@@ -19,7 +19,8 @@
     "webpack",
     "plugin",
     "node",
-    "icon"
+    "icon",
+    "crx"
   ],
   "author": "kaze-k <kerkaze@outlook.com> (https://github.com/kaze-k)",
   "license": "MIT",
